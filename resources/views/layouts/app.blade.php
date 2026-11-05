@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }} - SIM Manajemen Buku</title>
+        <title>{{ config('app.name', 'SIM Perpustakaan') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -14,68 +14,93 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-gray-50 text-gray-900 pb-16">
-        
-        {{-- Demo Role Switcher Bar (Fitur Kreatif untuk Pengujian & Presentasi Video) --}}
-        @auth
-            <div class="bg-slate-900 text-white text-xs px-4 py-2 border-b border-slate-800">
-                <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            DEMO MODE
-                        </span>
-                        <span class="text-slate-300">
-                            Login sebagai: <strong>{{ auth()->user()->name }}</strong> 
-                            (Role: <span class="text-amber-400 font-bold">{{ auth()->user()->getRoleNames()->first() ?? 'Tanpa Role' }}</span>)
-                        </span>
+    <body class="h-full font-sans antialiased text-slate-900 bg-slate-50">
+        <div x-data="{ sidebarOpen: false }" class="min-h-screen flex">
+            
+            {{-- Mobile Backdrop --}}
+            <div x-show="sidebarOpen" 
+                 x-transition:enter="transition-opacity ease-linear duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition-opacity ease-linear duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="sidebarOpen = false" 
+                 class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+                 style="display: none;"></div>
+
+            {{-- Sidebar Kiri (Desktop tetap, Mobile drawer) --}}
+            <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+                   class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 flex flex-col shrink-0">
+                @include('layouts.navigation')
+            </aside>
+
+            {{-- Kolom Utama --}}
+            <div class="flex-1 flex flex-col min-w-0">
+                
+                {{-- Topbar Tipis --}}
+                <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
+                    {{-- Hamburger Button Mobile --}}
+                    <div class="flex items-center gap-3">
+                        <button @click="sidebarOpen = true" type="button" aria-label="Buka navigasi menu"
+                                class="lg:hidden p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <span class="text-slate-400 text-[11px]">Beralih Akun Cepat:</span>
-                        <form method="POST" action="{{ route('demo.switch-role') }}" class="inline">
+                    {{-- Profil & Tombol Keluar --}}
+                    <div class="flex items-center gap-3">
+                        @php
+                            $roleName = Auth::user()->getRoleNames()->first() ?? 'Pengguna';
+                            $badgeVariant = match($roleName) {
+                                'Admin' => 'danger',
+                                'Dosen' => 'primary',
+                                'Mahasiswa' => 'success',
+                                default => 'neutral',
+                            };
+                        @endphp
+
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-slate-800">{{ Auth::user()->name }}</span>
+                            <x-badge :variant="$badgeVariant">
+                                {{ $roleName }}
+                            </x-badge>
+                        </div>
+
+                        <div class="h-4 w-px bg-slate-200 mx-1"></div>
+
+                        <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <input type="hidden" name="role" value="Admin">
-                            <button type="submit" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-rose-600 hover:bg-rose-700 text-white transition shadow-sm" title="Login sebagai Admin (admin@gmail.com)">
-                                👑 Admin
+                            <button type="submit" 
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 hover:border-rose-200 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500"
+                                    aria-label="Keluar dari akun">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                <span>Keluar</span>
                             </button>
                         </form>
-
-                        <form method="POST" action="{{ route('demo.switch-role') }}" class="inline">
-                            @csrf
-                            <input type="hidden" name="role" value="Dosen">
-                            <button type="submit" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-sky-600 hover:bg-sky-700 text-white transition shadow-sm" title="Login sebagai Dosen (dosen@gmail.com)">
-                                🎓 Dosen
-                            </button>
-                        </form>
-
-                        <form method="POST" action="{{ route('demo.switch-role') }}" class="inline">
-                            @csrf
-                            <input type="hidden" name="role" value="Mahasiswa">
-                            <button type="submit" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm" title="Login sebagai Mahasiswa (mahasiswa@gmail.com)">
-                                🎒 Mahasiswa
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        @endauth
-
-        <div class="min-h-screen">
-            @include('layouts.navigation')
-
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white shadow-sm border-b border-gray-100">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
                     </div>
                 </header>
-            @endisset
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+                {{-- Area Konten --}}
+                <main class="flex-1 p-4 sm:p-6 lg:p-8">
+                    <div class="max-w-7xl mx-auto">
+                        {{-- Render Slot Header jika ada (sebagai judul halaman di area konten) --}}
+                        @isset($header)
+                            <div class="mb-6">
+                                {{ $header }}
+                            </div>
+                        @endisset
+
+                        {{ $slot }}
+                    </div>
+                </main>
+
+            </div>
+
         </div>
     </body>
 </html>
